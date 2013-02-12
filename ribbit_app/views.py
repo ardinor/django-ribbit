@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.http import Http404
-from django.core.exceptions import ObjectDoesNotExist
+#from django.core.exceptions import ObjectDoesNotExist
 
 from ribbit_app.forms import AuthenticateForm, UserCreateForm, RibbitForm
 from ribbit_app.models import Ribbit
@@ -111,7 +111,8 @@ def users(request, username="", ribbit_form=None):
         # if it is their own profile, or they're already following them we don't need a "Follow" link
             return render(request, 'user.html',
                           {'user': user,
-                           'ribbits': ribbits, })
+                           'ribbits': ribbits,
+                           'unfollow': True, })
         return render(request, 'user.html',
                       {'user': user,
                        'ribbits': ribbits,
@@ -136,7 +137,20 @@ def follow(request):
             try:
                 user = User.objects.get(id=follow_id)
                 request.user.profile.follows.add(user.profile)
-            except ObjectDoesNotExist:
-                return redirect ('/users/')
+            except User.DoesNotExist:
+                return redirect('/users/')
                 
+    return redirect('/users/')
+    
+    
+@login_required
+def unfollow(request):
+    if request.method == 'POST':
+        unfollow_id = request.POST.get('unfollow', False)
+        if unfollow_id:
+            try:
+                user = User.objects.get(id=unfollow_id)
+                request.user.profile.follows.remove(user.profile)
+            except User.DoesNotExist:
+                return redirect('/users/')
     return redirect('/users/')
